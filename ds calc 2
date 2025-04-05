@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debt Settlement Calculator</title>
+    <style>
+        /* General styling for the page */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        /* Form styling using flexbox for alignment */
+        .form-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .form-group label {
+            width: 200px;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 150px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        /* Button styling */
+        button {
+            padding: 10px 20px;
+            margin-top: 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* Results section styling */
+        #results {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        #results p {
+            margin: 5px 0;
+        }
+
+        /* Payment schedule table styling */
+        #schedule {
+            margin-top: 20px;
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        #schedule th,
+        #schedule td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: right;
+        }
+
+        #schedule th {
+            background-color: #f2f2f2;
+            color: #333;
+        }
+
+        #schedule td:first-child {
+            text-align: center;
+        }
+
+        /* Responsive design for smaller screens */
+        @media (max-width: 600px) {
+            .form-group {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .form-group label {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+
+            .form-group input,
+            .form-group select {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h2>Debt Settlement Calculator</h2>
+    <div class="form-group">
+        <label for="totalDebt">Total Debt ($)</label>
+        <input type="number" id="totalDebt" value="49780">
+    </div>
+    <div class="form-group">
+        <label for="months">Number of Months</label>
+        <select id="months">
+            <option value="12">12</option>
+            <option value="18">18</option>
+            <option value="24" selected>24</option>
+            <option value="30">30</option>
+            <option value="36">36</option>
+            <option value="42">42</option>
+            <option value="48">48</option>
+            <option value="54">54</option>
+            <option value="60">60</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="settlementPercent">Maximum Settlement (%)</label>
+        <input type="number" id="settlementPercent" value="40">
+    </div>
+    <div class="form-group">
+        <label for="programPercent">Program Percentage (%)</label>
+        <select id="programPercent">
+            <option value="15">15</option>
+            <option value="18">18</option>
+            <option value="20" selected>20</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="enrollmentFee">Enrollment Fee ($)</label>
+        <input type="number" id="enrollmentFee" value="500">
+    </div>
+    <div class="form-group">
+        <label for="legalFee">Monthly Legal Admin Fee ($)</label>
+        <input type="number" id="legalFee" value="69">
+    </div>
+    <div class="form-group">
+        <label for="bankFee">Monthly Bank Fee ($)</label>
+        <input type="number" id="bankFee" value="10.75">
+    </div>
+    <button onclick="calculate()">Calculate</button>
+    <div id="results"></div>
+    <table id="schedule">
+        <thead>
+            <tr>
+                <th>Payment #</th>
+                <th>Monthly Payment</th>
+                <th>Retainer</th>
+                <th>Legal Admin</th>
+                <th>Program Fee</th>
+                <th>Bank Fee</th>
+                <th>Savings</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        function calculate() {
+            // Retrieve input values and convert to appropriate types
+            const totalDebt = parseFloat(document.getElementById('totalDebt').value);
+            const months = parseInt(document.getElementById('months').value);
+            const settlementPercent = parseFloat(document.getElementById('settlementPercent').value);
+            const programPercent = parseFloat(document.getElementById('programPercent').value);
+            const enrollmentFee = parseFloat(document.getElementById('enrollmentFee').value);
+            const legalFee = parseFloat(document.getElementById('legalFee').value);
+            const bankFee = parseFloat(document.getElementById('bankFee').value);
+
+            // Basic input validation
+            if (isNaN(totalDebt) || isNaN(months) || isNaN(settlementPercent) || 
+                isNaN(programPercent) || isNaN(enrollmentFee) || 
+                isNaN(legalFee) || isNaN(bankFee) || 
+                totalDebt <= 0 || months <= 0 || settlementPercent <= 0 || 
+                programPercent <= 0 || enrollmentFee < 0 || legalFee < 0 || bankFee < 0) {
+                alert('Please enter valid positive numbers for all fields.');
+                return;
+            }
+
+            // Calculate core financial metrics
+            const totalSettlement = totalDebt * (settlementPercent / 100);
+            const programFees = totalDebt * (programPercent / 100);
+            const totalProgramCost = totalSettlement + programFees + enrollmentFee + 
+                                    (legalFee * months) + (bankFee * months);
+            const totalSavings = totalDebt - totalProgramCost;
+
+            // Calculate monthly payment, with adjustment for the last month
+            const monthlyPayment = Math.ceil((totalProgramCost / months) * 100) / 100;
+            const lastPayment = totalProgramCost - (monthlyPayment * (months - 1));
+
+            // Calculate monthly program fee, with adjustment for the last month
+            const monthlyProgramFee = Math.floor((programFees / months) * 100) / 100;
+            const lastProgramFee = programFees - (monthlyProgramFee * (months - 1));
+
+            // Display summary in the results div
+            document.getElementById('results').innerHTML = `
+                <p><strong>Total Settlement:</strong> $${totalSettlement.toFixed(2)}</p>
+                <p><strong>Program Fees:</strong> $${programFees.toFixed(2)}</p>
+                <p><strong>Total Estimated Program Cost:</strong> $${totalProgramCost.toFixed(2)}</p>
+                <p><strong>Total Estimated Savings:</strong> $${totalSavings.toFixed(2)}</p>
+                <p><strong>Monthly Payment:</strong> $${monthlyPayment.toFixed(2)} (last payment: $${lastPayment.toFixed(2)})</p>
+            `;
+
+            // Generate payment schedule
+            let scheduleHtml = '';
+            for (let i = 1; i <= months; i++) {
+                // Determine payment and program fee based on month
+                const payment = i < months ? monthlyPayment : lastPayment;
+                const retainer = i === 1 ? 300 : (i <= 5 ? 50 : 0); // Enrollment fee spread over first 5 months
+                const programFee = i < months ? monthlyProgramFee : lastProgramFee;
+                const savings = payment - retainer - legalFee - programFee - bankFee;
+
+                // Build table row
+                scheduleHtml += `
+                    <tr>
+                        <td>${i}</td>
+                        <td>$${payment.toFixed(2)}</td>
+                        <td>$${retainer.toFixed(2)}</td>
+                        <td>$${legalFee.toFixed(2)}</td>
+                        <td>$${programFee.toFixed(2)}</td>
+                        <td>$${bankFee.toFixed(2)}</td>
+                        <td>$${savings.toFixed(2)}</td>
+                    </tr>`;
+            }
+            document.querySelector('#schedule tbody').innerHTML = scheduleHtml;
+        }
+    </script>
+</body>
+</html>
