@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Debt Settlement Calculator</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        label { display: block; margin: 5px 0; }
+        input, select { width: 200px; padding: 5px; }
+        button { padding: 10px 20px; margin-top: 10px; }
+        table { border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h2>Debt Settlement Calculator</h2>
+    <label>Total Debt: <input type="number" id="totalDebt" value="49780"></label>
+    <label>Number of Months: <select id="months">
+        <option value="12">12</option>
+        <option value="18">18</option>
+        <option value="24" selected>24</option>
+        <option value="30">30</option>
+        <option value="36">36</option>
+        <option value="42">42</option>
+        <option value="48">48</option>
+        <option value="60">60</option>
+    </select></label>
+    <label>Maximum Settlement (%): <input type="number" id="settlementPercent" value="40"></label>
+    <label>Program Percentage (%): <select id="programPercent">
+        <option value="15">15</option>
+        <option value="18">18</option>
+        <option value="20" selected>20</option>
+    </select></label>
+    <label>Monthly Legal Admin Fee: <input type="number" id="legalFee" value="69"></label>
+    <label>Monthly Bank Fee: <select id="bankFee">
+        <option value="49">49</option>
+        <option value="59">59</option>
+        <option value="69" selected>69</option>
+    </select></label>
+    <button onclick="calculate()">Calculate</button>
+    <div id="results"></div>
+    <table id="schedule"></table>
+
+    <script>
+        function calculate() {
+            // Get input values from the form
+            const totalDebt = parseFloat(document.getElementById('totalDebt').value);
+            const months = parseInt(document.getElementById('months').value);
+            const settlementPercent = parseFloat(document.getElementById('settlementPercent').value);
+            const programPercent = parseFloat(document.getElementById('programPercent').value);
+            const legalFee = parseFloat(document.getElementById('legalFee').value);
+            const bankFee = parseFloat(document.getElementById('bankFee').value);
+
+            // Core calculations
+            const totalSettlement = totalDebt * (settlementPercent / 100);
+            const programFees = totalDebt * (programPercent / 100);
+            const sumRetainer = 500; // Fixed retainer: $300 month 1, $50 months 2-5, $0 thereafter
+            const totalLegalFees = legalFee * months;
+            const totalBankFees = bankFee * months;
+            const totalProgramCost = totalSettlement + programFees + sumRetainer + totalLegalFees + totalBankFees;
+            const baseSavings = (totalSettlement + sumRetainer) / months;
+
+            // Calculate monthly payment (same for all except last month, adjusted for total)
+            const monthlyPayment = Math.ceil((totalProgramCost / months) * 100) / 100;
+            const lastPayment = totalProgramCost - monthlyPayment * (months - 1);
+
+            // Display summary results
+            document.getElementById('results').innerHTML = `
+                <p>Total Settlement: $${totalSettlement.toFixed(2)}</p>
+                <p>Program Fees: $${programFees.toFixed(2)}</p>
+                <p>Total Estimated Program Cost: $${totalProgramCost.toFixed(2)}</p>
+                <p>Total Estimated Savings: $${(totalDebt - totalProgramCost).toFixed(2)}</p>
+                <p>Monthly Payment: $${monthlyPayment.toFixed(2)} (last payment: $${lastPayment.toFixed(2)})</p>
+            `;
+
+            // Generate payment schedule
+            let scheduleHtml = `
+                <tr>
+                    <th>Payment #</th>
+                    <th>Monthly Payment</th>
+                    <th>Retainer</th>
+                    <th>Legal Admin</th>
+                    <th>Program Fee</th>
+                    <th>Bank Fee</th>
+                    <th>Savings</th>
+                </tr>`;
+            for (let i = 1; i <= months; i++) {
+                const mp = i < months ? monthlyPayment : lastPayment;
+                const retainer = i === 1 ? 300 : (i <= 5 ? 50 : 0);
+                const savings = baseSavings - retainer;
+                const programFee = mp - legalFee - bankFee - retainer - savings;
+                scheduleHtml += `
+                    <tr>
+                        <td>${i}</td>
+                        <td>$${mp.toFixed(2)}</td>
+                        <td>$${retainer.toFixed(2)}</td>
+                        <td>$${legalFee.toFixed(2)}</td>
+                        <td>$${programFee.toFixed(2)}</td>
+                        <td>$${bankFee.toFixed(2)}</td>
+                        <td>$${savings.toFixed(2)}</td>
+                    </tr>`;
+            }
+            document.getElementById('schedule').innerHTML = scheduleHtml;
+        }
+    </script>
+</body>
+</html>
